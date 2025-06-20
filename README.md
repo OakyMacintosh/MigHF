@@ -2,9 +2,8 @@
 
 > “Who said I’m into building chips? I’m just a creative programmer.”
 >
-> <cite>OakyMac</cite>
+> <cite>OakyMacintosh</cite>
 
----
 
 ## Overview
 
@@ -24,8 +23,11 @@ It lets you experiment with a simple CPU, custom instruction set, and assembly-l
 ### Build
 
 ```sh
-g++ source/mighf-unix-msys.c -o mighf.bin
+gcc source/mighf-unix-msys.c -o mighf.bin
 ```
+>[!NOTE]
+>The `mingw-w64` toolkit can also be used to compile `mighf`
+>It was tested by me.
 
 ### Run
 
