@@ -68,5 +68,5 @@ MIT License
 
 ---
 
-Made with ❤️ by [OakyMac](https://www.youtube.com/@OakyMacintosh).
+Made with ❤️ by [OakyMacintosh](https://www.youtube.com/@OakyMacintosh).
 
