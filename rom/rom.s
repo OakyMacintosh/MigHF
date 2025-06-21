@@ -1,4 +1,5 @@
-TDRAW_CLEAR
-MOV R1, 10
-MOV R2, 5
-TDRAW_PIXEL R1, R2, '*'
+mov r0 10
+mov r1 5
+add r0 r1
+print reg 0
+halt

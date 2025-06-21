@@ -149,7 +149,7 @@ $ ./mighf demo.asm
 
 ## ✨ Credits
 
-* Original dev: **OakyMac** (drop "r/OakyMac" if you share)
+* Original dev: **OakyMac** (drop "u/OakyMac" if you share)
 * License: MIT — free to use, remix, hack, etc.
 
 ---

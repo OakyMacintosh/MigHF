@@ -16,7 +16,7 @@
         On Windows, I recommend using MSYS2 to compile it.
         On systems you may need to patch the code, like on Classic MacOS or on RiscOS.
         This code was from my original Gist.
-        On case of using this code, please credit me (OakyMac, or just put "r/OakyMac") as the original author.
+        On case of using this code, please credit me (OakyMac, or just put "u/OakyMac") as the original author.
     LICENSE:
         This code is licensed under the MIT License.
 
@@ -27,6 +27,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#include <unistd.h>
+#endif
 
 #define VDISP_WIDTH 320
 #define VDISP_HEIGHT 240
@@ -191,6 +197,10 @@ int assemble(const char *line, Instruction *inst) {
     char op[32], arg1[32], arg2[32], arg3[32];
     int n = sscanf(line, "%31s %31s %31s %31s", op, arg1, arg2, arg3);
     if (n < 1) return 0;
+
+    // Convert op to uppercase for case-insensitive matching
+    for (int i = 0; op[i]; i++) op[i] = toupper((unsigned char)op[i]);
+
     if (strcmp(op, "NOP") == 0) { inst->opcode = NOP; }
     else if (strcmp(op, "MOV") == 0 && n == 3) {
         inst->opcode = MOV;
@@ -282,6 +292,8 @@ int assemble(const char *line, Instruction *inst) {
     }
     else if (strcmp(op, "PRINT") == 0 && n == 3) {
         inst->opcode = PRINT;
+        // Convert arg1 to uppercase for case-insensitive matching
+        for (int i = 0; arg1[i]; i++) arg1[i] = toupper((unsigned char)arg1[i]);
         if (strcmp(arg1, "REG") == 0) {
             inst->op1 = 0;
             inst->imm = atoi(arg2);
@@ -305,31 +317,59 @@ int assemble(const char *line, Instruction *inst) {
     return 1;
 }
 
+// Print system information
+void print_system_info() {
+    // Print OS
+#if defined(_WIN32)
+    printf("Windows\n");
+#elif defined(__linux__)
+    printf("Linux\n");
+#elif defined(__APPLE__)
+    printf("macOS\n");
+#elif defined(__FreeBSD__)
+    printf("FreeBSD\n");
+#else
+    printf("Unknown OS\n");
+#endif
+
+    // Print architecture
+#if defined(_WIN64) || defined(__x86_64__) || defined(__amd64__)
+    printf("Architecture: x86_64\n");
+#elif defined(_WIN32) || defined(__i386__)
+    printf("Architecture: x86 (32-bit)\n");
+#elif defined(__aarch64__)
+    printf("Architecture: ARM64\n");
+#elif defined(__arm__)
+    printf("Architecture: ARM\n");
+#elif defined(__powerpc64__)
+    printf("Architecture: PowerPC64\n");
+#elif defined(__powerpc__)
+    printf("Architecture: PowerPC\n");
+#else
+    printf("Architecture: Unknown\n");
+#endif
+
+    // Print number of processors
+#if defined(_WIN32)
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    printf("Processors: %u\n", sysinfo.dwNumberOfProcessors);
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+    long nprocs = sysconf(_SC_NPROCESSORS_ONLN);
+    if (nprocs > 0)
+        printf("Processors: %ld\n", nprocs);
+    else
+        printf("Processors: Unknown\n");
+#else
+    printf("Processors: Unknown\n");
+#endif
+}
+
 // UEFI Shell-like shell
 void shell() {
     char line[MAX_LINE];
-    printf("Welcome to mighf-embedded micro-arch shell!\n");
-#if defined(__linux__)
-    printf("Host platform: Linux (%s)\n", 
-#if defined(__x86_64__)
-        "x86_64"
-#elif defined(__aarch64__)
-        "aarch64"
-#elif defined(__arm__)
-        "arm"
-#elif defined(__i386__)
-        "i386"
-#else
-        "unknown"
-#endif
-    );
-#elif defined(_WIN32)
-    printf("Host platform: Windows\n");
-#elif defined(__APPLE__)
-    printf("Host platform: macOS\n");
-#else
-    printf("Host platform: Unknown\n");
-#endif
+    printf("OpenBoot v1:: mighf-\n");
+    print_system_info();
     printf("Type 'help' for commands.\n");
     while (1) {
         printf("coreshell> ");
