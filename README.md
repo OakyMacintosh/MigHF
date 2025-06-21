@@ -53,6 +53,9 @@ MOV R2, 5
 TDRAW_PIXEL R1, R2, '*'
 ```
 
+> [!TIP]
+> To learn about the `mighf` assembly language read the [Docs](./Docs.md)
+
 ## Project Structure
 
 - `source/` — Runtime and assembler source code
