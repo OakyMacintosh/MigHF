@@ -47,10 +47,10 @@ coreshell> run
 ## Assembly Example
 
 ```asm
-TDRAW_CLEAR
+# TDRAW_CLEAR <-- Removed that instruction in commit `e60aecc`
 MOV R1, 10
 MOV R2, 5
-TDRAW_PIXEL R1, R2, '*'
+# TDRAW_PIXEL R1, R2, '*' <-- Removed that instruction in commit `e60aecc`
 ```
 
 > [!TIP]
