@@ -43,12 +43,13 @@ typedef enum {
 
 typedef struct {
     Instr opcode;
-    uint8_t op1;
-    uint8_t op2;
+    uint16_t op1;    // 16-bit register addressing (0-65535)
+    uint16_t op2;    // 16-bit register addressing (0-65535)
     uint32_t imm;
 } Instruction;
 
 int assemble(const char *line, Instruction *inst);
+int parse_register_number(const char *reg_str);
 
 #endif // ASSEMBLER_H
 
@@ -64,30 +65,44 @@ int assemble(const char *line, Instruction *inst) {
     // Convert op to uppercase for case-insensitive matching
     for (int i = 0; op[i]; i++) op[i] = toupper((unsigned char)op[i]);
 
-    if (strcmp(op, "NOP") == 0) { inst->opcode = NOP; }
+    if (strcmp(op, "NOP") == 0) { 
+        inst->opcode = NOP; 
+    }
     else if (strcmp(op, "MOV") == 0 && n == 3) {
         inst->opcode = MOV;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "ADD") == 0 && n == 3) {
         inst->opcode = ADD;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "SUB") == 0 && n == 3) {
         inst->opcode = SUB;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "LOAD") == 0 && n == 3) {
         inst->opcode = LOAD;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "STORE") == 0 && n == 3) {
         inst->opcode = STORE;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "JMP") == 0 && n == 2) {
@@ -96,61 +111,91 @@ int assemble(const char *line, Instruction *inst) {
     }
     else if (strcmp(op, "CMP") == 0 && n == 3) {
         inst->opcode = CMP;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "JE") == 0 && n == 2) {
         inst->opcode = JE;
         inst->imm = atoi(arg1);
     }
-    else if (strcmp(op, "HALT") == 0) { inst->opcode = HALT; }
+    else if (strcmp(op, "HALT") == 0) { 
+        inst->opcode = HALT; 
+    }
     else if (strcmp(op, "AND") == 0 && n == 3) {
         inst->opcode = AND;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "ORR") == 0 && n == 3) {
         inst->opcode = ORR;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "EOR") == 0 && n == 3) {
         inst->opcode = EOR;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "LSL") == 0 && n == 3) {
         inst->opcode = LSL;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "LSR") == 0 && n == 3) {
         inst->opcode = LSR;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "MUL") == 0 && n == 3) {
         inst->opcode = MUL;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "UDIV") == 0 && n == 3) {
         inst->opcode = UDIV;
-        inst->op1 = arg1[1] - '0';
-        inst->op2 = arg2[1] - '0';
+        int reg1 = parse_register_number(arg1);
+        int reg2 = parse_register_number(arg2);
+        if (reg1 < 0 || reg2 < 0) return 0;
+        inst->op1 = reg1;
+        inst->op2 = reg2;
     }
     else if (strcmp(op, "NEG") == 0 && n == 2) {
         inst->opcode = NEG;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
     }
     else if (strcmp(op, "MOVZ") == 0 && n == 3) {
         inst->opcode = MOVZ;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "MOVN") == 0 && n == 3) {
         inst->opcode = MOVN;
-        inst->op1 = arg1[1] - '0';
+        int reg = parse_register_number(arg1);
+        if (reg < 0) return 0;
+        inst->op1 = reg;
         inst->imm = atoi(arg2);
     }
     else if (strcmp(op, "PRINT") == 0 && n == 3) {
@@ -169,13 +214,33 @@ int assemble(const char *line, Instruction *inst) {
     }
     else if (strcmp(op, "TDRAW_CLEAR") == 0) {
         inst->opcode = TDRAW_CLEAR;
-    } else if (strcmp(op, "TDRAW_PIXEL") == 0 && n == 4) {
+    } 
+    else if (strcmp(op, "TDRAW_PIXEL") == 0 && n == 4) {
         inst->opcode = TDRAW_PIXEL;
-        int rx = arg1[1] - '0';
-        int ry = arg2[1] - '0';
+        int rx = parse_register_number(arg1);
+        int ry = parse_register_number(arg2);
+        if (rx < 0 || ry < 0) return 0;
         int ch = arg3[0];
         inst->imm = rx | (ry << 8) | (ch << 16);
     }
     else return 0;
     return 1;
+}
+
+int parse_register_number(const char *reg_str) {
+    // Validate input: must not be null and must start with 'R' or 'r'
+    if (!reg_str || (reg_str[0] != 'R' && reg_str[0] != 'r')) {
+        return -1;
+    }
+    
+    // Parse the number part after 'R'
+    char *endptr;
+    long reg_num = strtol(reg_str + 1, &endptr, 10);
+    
+    // Validate: must be valid number, no extra characters, within 16-bit range
+    if (*endptr != '\0' || reg_num < 0 || reg_num > 65535) {
+        return -1;
+    }
+    
+    return (int)reg_num;
 }

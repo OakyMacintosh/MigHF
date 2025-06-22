@@ -41,17 +41,20 @@
 // #define VDISP_HEIGHT 240
 
 #define MEM_SIZE 2024
-#define REG_COUNT 16
+#define MAX_REGISTERS 65536  // Maximum for 16-bit addressing
+#define DEFAULT_REG_COUNT 256
 #define MAX_PROGRAM_SIZE 1024
 #define MAX_LINE 128
 
-// Registers: R0-R7
-uint32_t regs[REG_COUNT];
+uint32_t *regs = NULL;
+uint32_t current_reg_count = DEFAULT_REG_COUNT;
 uint8_t memory[MEM_SIZE];
 uint32_t pc = 0; // Program counter
 uint8_t running = 1;
 
 // Function prototypes
+void init_registers(uint32_t count);
+void cleanup_registers();
 void vdisp_init();
 void vdisp_quit();
 void wait_for_window_close();
@@ -64,29 +67,48 @@ Instruction program[MEM_SIZE];
 // Flags
 uint8_t flag_zero = 0;
 
+// Initialize register array with specified count
+void init_registers(uint32_t count) {
+    if (regs) free(regs);
+    current_reg_count = (count > MAX_REGISTERS) ? MAX_REGISTERS : count;
+    regs = calloc(current_reg_count, sizeof(uint32_t));
+    if (!regs) {
+        printf("Error: Could not allocate memory for %u registers\n", current_reg_count);
+        exit(1);
+    }
+}
+
+// Cleanup register memory
+void cleanup_registers() {
+    if (regs) {
+        free(regs);
+        regs = NULL;
+    }
+}
+
 // Micro-architecture: fetch-decode-execute
 void execute_instruction(Instruction *inst) {
     switch (inst->opcode) {
         case NOP:
             break;
         case MOV:
-            if (inst->op1 < REG_COUNT)
+            if (inst->op1 < current_reg_count)
                 regs[inst->op1] = inst->imm;
             break;
         case ADD:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 regs[inst->op1] += regs[inst->op2];
             break;
         case SUB:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 regs[inst->op1] -= regs[inst->op2];
             break;
         case LOAD:
-            if (inst->op1 < REG_COUNT && inst->imm < MEM_SIZE)
+            if (inst->op1 < current_reg_count && inst->imm < MEM_SIZE)
                 regs[inst->op1] = memory[inst->imm];
             break;
         case STORE:
-            if (inst->op1 < REG_COUNT && inst->imm < MEM_SIZE)
+            if (inst->op1 < current_reg_count && inst->imm < MEM_SIZE)
                 memory[inst->imm] = regs[inst->op1] & 0xFF;
             break;
         case JMP:
@@ -94,7 +116,7 @@ void execute_instruction(Instruction *inst) {
                 pc = inst->imm - 1;
             break;
         case CMP:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 flag_zero = (regs[inst->op1] == regs[inst->op2]);
             break;
         case JE:
@@ -105,48 +127,48 @@ void execute_instruction(Instruction *inst) {
             running = 0;
             break;
         case AND:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 regs[inst->op1] &= regs[inst->op2];
             break;
         case ORR:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 regs[inst->op1] |= regs[inst->op2];
             break;
         case EOR:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 regs[inst->op1] ^= regs[inst->op2];
             break;
         case LSL:
-            if (inst->op1 < REG_COUNT)
+            if (inst->op1 < current_reg_count)
                 regs[inst->op1] <<= inst->imm;
             break;
         case LSR:
-            if (inst->op1 < REG_COUNT)
+            if (inst->op1 < current_reg_count)
                 regs[inst->op1] >>= inst->imm;
             break;
         case MUL:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
                 regs[inst->op1] *= regs[inst->op2];
             break;
         case UDIV:
-            if (inst->op1 < REG_COUNT && inst->op2 < REG_COUNT && regs[inst->op2] != 0)
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count && regs[inst->op2] != 0)
                 regs[inst->op1] /= regs[inst->op2];
             break;
         case NEG:
-            if (inst->op1 < REG_COUNT)
+            if (inst->op1 < current_reg_count)
                 regs[inst->op1] = -regs[inst->op1];
             break;
         case MOVZ:
-            if (inst->op1 < REG_COUNT)
+            if (inst->op1 < current_reg_count)
                 regs[inst->op1] = (uint16_t)inst->imm;
             break;
         case MOVN:
-            if (inst->op1 < REG_COUNT)
+            if (inst->op1 < current_reg_count)
                 regs[inst->op1] = ~(inst->imm);
             break;
         case PRINT:
             // PRINT REG idx  or PRINT MEM idx
-            if (inst->op1 == 0 && inst->imm < REG_COUNT) // REG
+            if (inst->op1 == 0 && inst->imm < current_reg_count) // REG
                 printf("R%u = %u\n", inst->imm, regs[inst->imm]);
             else if (inst->op1 == 1 && inst->imm < MEM_SIZE) // MEM
                 printf("MEM[%u] = %u\n", inst->imm, memory[inst->imm]);
@@ -155,7 +177,13 @@ void execute_instruction(Instruction *inst) {
             tdraw_clear();
             break;
         case TDRAW_PIXEL:
-            tdraw_pixel(regs[inst->imm & 0xFF], regs[(inst->imm >> 8) & 0xFF], (char)((inst->imm >> 16) & 0xFF));
+            {
+                uint16_t rx = inst->imm & 0xFF;
+                uint16_t ry = (inst->imm >> 8) & 0xFF;
+                if (rx < current_reg_count && ry < current_reg_count) {
+                    tdraw_pixel(regs[rx], regs[ry], (char)((inst->imm >> 16) & 0xFF));
+                }
+            }
             break;
         default:
             break;
@@ -210,18 +238,18 @@ void print_system_info() {
 #endif
 }
 
-void print_memory_infomation() {
-    // allocate memory for the program
+void print_memory_information() {
     printf("Memory Size: %d bytes\n", MEM_SIZE);
-    printf("Registers: %d (R0-R%d)\n", REG_COUNT, REG_COUNT - 1);
+    printf("Registers: %u available (R0-R%u), max possible: %u\n", 
+           current_reg_count, current_reg_count - 1, MAX_REGISTERS);
 }
 
-// UEFI Shell-like shell
+// Enhanced shell with 16-bit register support
 void shell() {
     char line[MAX_LINE];
-    printf("mighf-v1\n");
+    printf("mighf-v2 (16-bit register support)\n");
     print_system_info();
-    print_memory_infomation();
+    print_memory_information();
     printf("Type 'help' for commands.\n");
     while (1) {
         printf("coreshell> ");
@@ -229,15 +257,45 @@ void shell() {
         if (strncmp(line, "exit", 4) == 0) break;
         else if (strncmp(line, "help", 4) == 0) {
             printf("Commands:\n");
-            printf("  load <file>   - Load program\n");
-            printf("  run           - Run program\n");
-            printf("  regs          - Show registers\n");
-            printf("  mem <addr>    - Show memory at addr\n");
-            printf("  exit          - Exit shell\n");
+            printf("  load <file>       - Load program\n");
+            printf("  run               - Run program\n");
+            printf("  regs              - Show first 32 registers\n");
+            printf("  reg <num>         - Show specific register\n");
+            printf("  regcount          - Show register count info\n");
+            printf("  resize <count>    - Change number of available registers\n");
+            printf("  mem <addr>        - Show memory at addr\n");
+            printf("  exit              - Exit shell\n");
+        }
+        else if (strncmp(line, "regcount", 8) == 0) {
+            printf("Current register count: %u (max: %u)\n", current_reg_count, MAX_REGISTERS);
+        }
+        else if (strncmp(line, "resize", 6) == 0) {
+            uint32_t new_count = atoi(line + 7);
+            if (new_count > 0 && new_count <= MAX_REGISTERS) {
+                init_registers(new_count);
+                printf("Resized to %u registers\n", current_reg_count);
+            } else {
+                printf("Invalid count. Must be 1-%u\n", MAX_REGISTERS);
+            }
         }
         else if (strncmp(line, "regs", 4) == 0) {
-            for (int i = 0; i < REG_COUNT; i++)
-                printf("R%d: %u\n", i, regs[i]);
+            printf("Showing first 32 registers (total available: %u):\n", current_reg_count);
+            uint32_t display_count = (current_reg_count > 32) ? 32 : current_reg_count;
+            for (uint32_t i = 0; i < display_count; i++) {
+                printf("R%u: %u\n", i, regs[i]);
+            }
+            if (current_reg_count > 32) {
+                printf("... and %u more registers (use 'reg <num>' to view specific ones)\n", 
+                       current_reg_count - 32);
+            }
+        }
+        else if (strncmp(line, "reg ", 4) == 0) {
+            uint32_t reg_num = atoi(line + 4);
+            if (reg_num < current_reg_count) {
+                printf("R%u: %u\n", reg_num, regs[reg_num]);
+            } else {
+                printf("Register R%u not available (max: R%u)\n", reg_num, current_reg_count - 1);
+            }
         }
         else if (strncmp(line, "mem", 3) == 0) {
             int addr = atoi(line + 4);
@@ -313,10 +371,10 @@ void tdraw_pixel(int x, int y, char c) {
     fflush(stdout);
 }
 
-
-
 int main(int argc, char **argv) {
-    memset(regs, 0, sizeof(regs));
+    // Initialize with default register count
+    init_registers(DEFAULT_REG_COUNT);
+    
     memset(memory, 0, sizeof(memory));
     memset(program, 0, sizeof(program));
 
@@ -345,5 +403,6 @@ int main(int argc, char **argv) {
         printf("Program finished.\n");
     }
 
+    cleanup_registers();
     return 0;
 }
