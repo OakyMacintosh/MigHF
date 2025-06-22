@@ -37,9 +37,6 @@
 #include "assembler.h"
 #include "program_counter.h"
 
-// #define VDISP_WIDTH 320
-// #define VDISP_HEIGHT 240
-
 #define MEM_SIZE 2024
 #define REG_COUNT 16
 #define MAX_PROGRAM_SIZE 1024
