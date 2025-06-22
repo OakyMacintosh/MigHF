@@ -18,8 +18,9 @@
 
 ### Registers
 
-* 8 general-purpose registers: `R0` to `R7`
+* Up to 65,536 general-purpose registers: `R0` to `R65535`
 * 32-bit each
+* Dynamic allocation (default: 256 registers)
 
 ### Memory
 
@@ -96,6 +97,16 @@ PRINT REG 0
 HALT
 ```
 
+Supports high-numbered registers:
+
+```asm
+MOV R100 42
+MOV R1000 100
+ADD R100 R1000
+PRINT REG 100
+HALT
+```
+
 ---
 
 ## 🖥️ CLI Shell Usage
@@ -113,6 +124,9 @@ coreshell> help
 * `load <file>` — Load assembly file
 * `run` — Execute loaded program
 * `regs` — Show register state
+* `reg <num>` — Show specific register
+* `regcount` — Show register count info
+* `resize <count>` — Change number of available registers
 * `mem <addr>` — Show memory at address
 * `exit` — Quit shell
 
