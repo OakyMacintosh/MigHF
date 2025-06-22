@@ -52,6 +52,14 @@ uint8_t memory[MEM_SIZE];
 uint32_t pc = 0; // Program counter
 uint8_t running = 1;
 
+// Add these globals for stack support
+#define STACK_SIZE 1024
+uint32_t stack[STACK_SIZE];
+uint32_t sp = 0; // Stack pointer
+
+// Add this for signed comparison
+int last_cmp = 0;
+
 // Function prototypes
 void init_registers(uint32_t count);
 void cleanup_registers();
@@ -115,10 +123,10 @@ void execute_instruction(Instruction *inst) {
             if (inst->imm < MEM_SIZE)
                 pc = inst->imm - 1;
             break;
-        case CMP:
-            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
-                flag_zero = (regs[inst->op1] == regs[inst->op2]);
-            break;
+//        case CMP:
+//            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count)
+//                flag_zero = (regs[inst->op1] == regs[inst->op2]);
+//            break;
         case JE:
             if (flag_zero && inst->imm < MEM_SIZE)
                 pc = inst->imm - 1;
@@ -183,6 +191,105 @@ void execute_instruction(Instruction *inst) {
                 if (rx < current_reg_count && ry < current_reg_count) {
                     tdraw_pixel(regs[rx], regs[ry], (char)((inst->imm >> 16) & 0xFF));
                 }
+            }
+            break;
+        case PUSH:
+            // push regs[op1] to stack
+            if (sp < STACK_SIZE && inst->op1 < current_reg_count) {
+                stack[sp++] = regs[inst->op1];
+            } else {
+                printf("Stack overflow or invalid register in PUSH\n");
+                running = 0;
+            }
+            break;
+        case POP:
+            // pop value from stack to regs[op1]
+            if (sp > 0 && inst->op1 < current_reg_count) {
+                regs[inst->op1] = stack[--sp];
+            } else {
+                printf("Stack underflow or invalid register in POP\n");
+                running = 0;
+            }
+            break;
+        case CALL:
+            // push current pc to stack, set pc to imm
+            if (sp < STACK_SIZE && inst->imm < MEM_SIZE) {
+                stack[sp++] = pc;
+                pc = inst->imm - 1;
+            } else {
+                printf("Stack overflow or invalid address in CALL\n");
+                running = 0;
+            }
+            break;
+        case RET:
+            // pop pc from stack
+            if (sp > 0) {
+                pc = stack[--sp];
+            } else {
+                printf("Stack underflow in RET\n");
+                running = 0;
+            }
+            break;
+        case IN:
+            // read integer from stdin to regs[op1]
+            if (inst->op1 < current_reg_count) {
+                printf("Input for R%u: ", inst->op1);
+                fflush(stdout);
+                if (scanf("%u", &regs[inst->op1]) != 1) {
+                    regs[inst->op1] = 0;
+                    while (getchar() != '\n' && !feof(stdin)); // clear input
+                }
+            }
+            break;
+        case OUT:
+            // print regs[op1] to stdout
+            if (inst->op1 < current_reg_count) {
+                printf("%u\n", regs[inst->op1]);
+            }
+            break;
+        case MOVB:
+            // regs[op1] = memory[imm];
+            if (inst->op1 < current_reg_count && inst->imm < MEM_SIZE) {
+                regs[inst->op1] = memory[inst->imm];
+            }
+            break;
+        case STRB:
+            // memory[imm] = regs[op1] & 0xFF;
+            if (inst->op1 < current_reg_count && inst->imm < MEM_SIZE) {
+                memory[inst->imm] = regs[inst->op1] & 0xFF;
+            }
+            break;
+        case MEMCPY:
+            // memcpy(&memory[op1], &memory[op2], imm);
+            if (inst->op1 + inst->imm <= MEM_SIZE && inst->op2 + inst->imm <= MEM_SIZE) {
+                memcpy(&memory[inst->op1], &memory[inst->op2], inst->imm);
+            }
+            break;
+        case JNE:
+            // if (!flag_zero) pc = imm - 1;
+            if (!flag_zero && inst->imm < MEM_SIZE) {
+                pc = inst->imm - 1;
+            }
+            break;
+        case JG:
+            // if (last_cmp > 0) pc = imm - 1;
+            if (last_cmp > 0 && inst->imm < MEM_SIZE) {
+                pc = inst->imm - 1;
+            }
+            break;
+        case JL:
+            // if (last_cmp < 0) pc = imm - 1;
+            if (last_cmp < 0 && inst->imm < MEM_SIZE) {
+                pc = inst->imm - 1;
+            }
+            break;
+        case CMP:
+            if (inst->op1 < current_reg_count && inst->op2 < current_reg_count) {
+                flag_zero = (regs[inst->op1] == regs[inst->op2]);
+                // signed comparison for JG/JL
+                int32_t a = (int32_t)regs[inst->op1];
+                int32_t b = (int32_t)regs[inst->op2];
+                last_cmp = (a > b) ? 1 : (a < b) ? -1 : 0;
             }
             break;
         default:
@@ -329,7 +436,6 @@ void shell() {
                 pc++;
             }
             printf("Program finished.\n");
-       //     wait_for_window_close(); // <-- Only after running the program
         }
         else {
             printf("Unknown command. Type 'help'.\n");

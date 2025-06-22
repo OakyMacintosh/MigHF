@@ -38,7 +38,22 @@ typedef enum {
     MOVN,   // 19
     PRINT,  // 20
     TDRAW_CLEAR,
-    TDRAW_PIXEL
+    TDRAW_PIXEL,
+
+    // New instructions for advanced programs:
+    PUSH,       // PUSH reg
+    POP,        // POP reg
+    CALL,       // CALL addr
+    RET,        // RET
+    IN,         // IN reg
+    OUT,        // OUT reg
+    MOVB,       // MOVB reg, addr (move byte from memory to reg)
+    STRB,       // STRB reg, addr (store byte from reg to memory)
+    MEMCPY,     // MEMCPY dst_addr, src_addr, len
+    JNE,        // JNE addr (jump if not equal)
+    JG,         // JG addr (jump if greater)
+    JL,         // JL addr (jump if less)
+    // ...add more as needed...
 } Instr;
 
 typedef struct {
@@ -192,6 +207,57 @@ int assemble(const char *line, Instruction *inst) {
         int ry = arg2[1] - '0';
         int ch = arg3[0];
         inst->imm = rx | (ry << 8) | (ch << 16);
+    }
+    else if (strcmp(op, "PUSH") == 0 && n == 2) {
+        inst->opcode = PUSH;
+        inst->op1 = parse_register_number(arg1);
+    }
+    else if (strcmp(op, "POP") == 0 && n == 2) {
+        inst->opcode = POP;
+        inst->op1 = parse_register_number(arg1);
+    }
+    else if (strcmp(op, "CALL") == 0 && n == 2) {
+        inst->opcode = CALL;
+        inst->imm = atoi(arg1);
+    }
+    else if (strcmp(op, "RET") == 0 && n == 1) {
+        inst->opcode = RET;
+    }
+    else if (strcmp(op, "IN") == 0 && n == 2) {
+        inst->opcode = IN;
+        inst->op1 = parse_register_number(arg1);
+    }
+    else if (strcmp(op, "OUT") == 0 && n == 2) {
+        inst->opcode = OUT;
+        inst->op1 = parse_register_number(arg1);
+    }
+    else if (strcmp(op, "MOVB") == 0 && n == 3) {
+        inst->opcode = MOVB;
+        inst->op1 = parse_register_number(arg1);
+        inst->imm = atoi(arg2);
+    }
+    else if (strcmp(op, "STRB") == 0 && n == 3) {
+        inst->opcode = STRB;
+        inst->op1 = parse_register_number(arg1);
+        inst->imm = atoi(arg2);
+    }
+    else if (strcmp(op, "MEMCPY") == 0 && n == 4) {
+        inst->opcode = MEMCPY;
+        inst->op1 = atoi(arg1); // dst_addr
+        inst->op2 = atoi(arg2); // src_addr
+        inst->imm = atoi(arg3); // len
+    }
+    else if (strcmp(op, "JNE") == 0 && n == 2) {
+        inst->opcode = JNE;
+        inst->imm = atoi(arg1);
+    }
+    else if (strcmp(op, "JG") == 0 && n == 2) {
+        inst->opcode = JG;
+        inst->imm = atoi(arg1);
+    }
+    else if (strcmp(op, "JL") == 0 && n == 2) {
+        inst->opcode = JL;
+        inst->imm = atoi(arg1);
     }
     else return 0;
     return 1;
