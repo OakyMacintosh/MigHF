@@ -57,25 +57,8 @@ int assemble(const char *line, Instruction *inst);
 #include <stdlib.h>
 
 int assemble(const char *line, Instruction *inst) {
-    char cleanline[256];
-    size_t i = 0, j = 0;
-
-    // Remove comments starting with '#'
-    while (line[i] && j < sizeof(cleanline) - 1) {
-        if (line[i] == '#') break;
-        cleanline[j++] = line[i++];
-    }
-    cleanline[j] = '\0';
-
-    // Skip empty or comment-only lines
-    for (i = 0; cleanline[i]; i++) {
-        if (!isspace((unsigned char)cleanline[i])) break;
-    }
-    if (!cleanline[i]) return 0;
-
     char op[32], arg1[32], arg2[32], arg3[32];
-   // int n = sscanf(line, "%31s %31s %31s %31s", op, arg1, arg2, arg3);
-    int n = sscanf(cleanline, "%31s %31s %31s %31s", op, arg1, arg2, arg3);
+    int n = sscanf(line, "%31s %31s %31s %31s", op, arg1, arg2, arg3);
     if (n < 1) return 0;
 
     // Convert op to uppercase for case-insensitive matching
