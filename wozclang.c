@@ -67,7 +67,12 @@ void compile_c_file(const char *filename, OutputBuffer *ob) {
             continue;
         }
         // Ignore comments and empty lines
-        if (line[0] == '/' && line[1] == '/') continue;
+        if (line[0] == '/' && line[1] == '/') {
+            char buf[MAX_LINE + 2];
+            snprintf(buf, sizeof(buf), "#%s", line + 2);
+            ob_add(ob, buf);
+            continue;
+        }
         if (line[0] == 0) continue;
 
         // --- Simple C parsing and translation ---
@@ -109,6 +114,28 @@ void compile_c_file(const char *filename, OutputBuffer *ob) {
             ob_add(ob, buf2);
             continue;
         }
+        // Multiplication: r0 = r1 * r2;
+        if (sscanf(line, "r%d = r%d * r%d;", &regdst, &regsrc1, &regsrc2) == 3) {
+            char buf1[32], buf2[32];
+            snprintf(buf1, sizeof(buf1), "mov r%d 0", regdst);
+            snprintf(buf2, sizeof(buf2), "add r%d r%d", regdst, regsrc1);
+            ob_add(ob, buf1);
+            ob_add(ob, buf2);
+            snprintf(buf2, sizeof(buf2), "mul r%d r%d", regdst, regsrc2);
+            ob_add(ob, buf2);
+            continue;
+        }
+        // Division: r0 = r1 / r2;
+        if (sscanf(line, "r%d = r%d / r%d;", &regdst, &regsrc1, &regsrc2) == 3) {
+            char buf1[32], buf2[32];
+            snprintf(buf1, sizeof(buf1), "mov r%d 0", regdst);
+            snprintf(buf2, sizeof(buf2), "add r%d r%d", regdst, regsrc1);
+            ob_add(ob, buf1);
+            ob_add(ob, buf2);
+            snprintf(buf2, sizeof(buf2), "udiv r%d r%d", regdst, regsrc2);
+            ob_add(ob, buf2);
+            continue;
+        }
         // Print: printf("reg: %d\n", r0);
         if (strstr(line, "printf") && strstr(line, "r")) {
             if (sscanf(line, "printf(\"%%d\", r%d);", &regnum) == 1 ||
@@ -146,6 +173,68 @@ void compile_c_file(const char *filename, OutputBuffer *ob) {
         // Halt: return 0;
         if (strstr(line, "return 0;")) {
             ob_add(ob, "halt");
+            continue;
+        }
+        // Left shift: r0 = r1 << 2;
+        int shift;
+        if (sscanf(line, "r%d = r%d << %d;", &regdst, &regsrc1, &shift) == 3) {
+            char buf1[32], buf2[32];
+            snprintf(buf1, sizeof(buf1), "mov r%d 0", regdst);
+            snprintf(buf2, sizeof(buf2), "add r%d r%d", regdst, regsrc1);
+            ob_add(ob, buf1);
+            ob_add(ob, buf2);
+            snprintf(buf2, sizeof(buf2), "lsl r%d %d", regdst, shift);
+            ob_add(ob, buf2);
+            continue;
+        }
+        // Right shift: r0 = r1 >> 2;
+        if (sscanf(line, "r%d = r%d >> %d;", &regdst, &regsrc1, &shift) == 3) {
+            char buf1[32], buf2[32];
+            snprintf(buf1, sizeof(buf1), "mov r%d 0", regdst);
+            snprintf(buf2, sizeof(buf2), "add r%d r%d", regdst, regsrc1);
+            ob_add(ob, buf1);
+            ob_add(ob, buf2);
+            snprintf(buf2, sizeof(buf2), "lsr r%d %d", regdst, shift);
+            ob_add(ob, buf2);
+            continue;
+        }
+        // push(r0);
+        if (sscanf(line, "push(r%d);", &regnum) == 1) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "push r%d", regnum);
+            ob_add(ob, buf);
+            continue;
+        }
+        // pop(r0);
+        if (sscanf(line, "pop(r%d);", &regnum) == 1) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "pop r%d", regnum);
+            ob_add(ob, buf);
+            continue;
+        }
+        // call(42);
+        if (sscanf(line, "call(%d);", &value) == 1) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "call %d", value);
+            ob_add(ob, buf);
+            continue;
+        }
+        // ret();
+        if (strstr(line, "ret();")) {
+            ob_add(ob, "ret");
+            continue;
+        }
+        // exit(0);
+        if (strstr(line, "exit(0);")) {
+            ob_add(ob, "halt");
+            continue;
+        }
+        // memcpy(100, 200, 10);
+        int dst, src, len;
+        if (sscanf(line, "memcpy(%d, %d, %d);", &dst, &src, &len) == 3) {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "memcpy %d %d %d", dst, src, len);
+            ob_add(ob, buf);
             continue;
         }
         // Fallback: add as comment
