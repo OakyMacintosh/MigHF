@@ -1,0 +1,100 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{mighf System Specification \\ \large Architecture, Operation, and Porting Guide}
+\author{Miguel “Kuyo” / SufremOak}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document specifies the architecture and operational principles of the mighf system, including the instruction set, memory model, execution pipeline, and guidelines for reimplementation and porting to new hardware platforms.
+\end{abstract}
+
+\section{Overview}
+The mighf system is a minimalist, stack- and register-based CPU architecture designed for easy implementation and efficient execution on embedded and legacy hardware. It balances simplicity and practical features while supporting extensibility and portability.
+
+\section{Architecture Components}
+\subsection{Registers}
+\begin{itemize}
+    \item \textbf{R0--R7}: 8 general-purpose 16-bit registers for computation and temporary storage.
+    \item \textbf{PC} (Program Counter): Holds the address of the next instruction to execute.
+    \item \textbf{SP} (Stack Pointer): Points to the top of the stack in memory.
+    \item \textbf{FLAGS}: Status register containing Zero (Z), Carry (C), Sign (S), and Overflow (O) flags.
+\end{itemize}
+
+\subsection{Memory Model}
+\begin{itemize}
+    \item Flat 16-bit address space, byte-addressable.
+    \item Stack grows downward from a high memory address.
+    \item Supports direct memory access for load/store instructions.
+\end{itemize}
+
+\section{Instruction Set}
+mighf uses fixed 16-bit wide instructions with opcode and operands encoded compactly. Supports arithmetic, logic, control flow, stack, and memory operations.
+
+\section{Execution Model}
+\begin{itemize}
+    \item \textbf{Fetch}: CPU fetches the instruction pointed by PC.
+    \item \textbf{Decode}: Instruction is decoded into opcode and operands.
+    \item \textbf{Execute}: ALU and other units perform the operation.
+    \item \textbf{Memory Access}: For load/store, memory is accessed as needed.
+    \item \textbf{Write-back}: Results are stored back in registers or memory.
+    \item \textbf{Update PC}: PC is incremented or updated by control flow instructions.
+\end{itemize}
+
+\section{System Behavior}
+\begin{itemize}
+    \item On reset, PC is set to a predefined start address.
+    \item Interrupts and exceptions are outside the current ISA scope but can be added as extensions.
+    \item The stack pointer must be initialized before use.
+\end{itemize}
+
+\section{Porting and Reimplementation Guidelines}
+\subsection{Target Platform Requirements}
+\begin{itemize}
+    \item Minimum 16-bit addressable memory.
+    \item Ability to implement 16-bit registers and ALU operations.
+    \item Support for a basic stack mechanism.
+\end{itemize}
+
+\subsection{Reimplementation Strategies}
+\begin{itemize}
+    \item \textbf{Software Emulation}: Implement the ISA in a high-level language (C, Rust, Go) using a loop for fetch-decode-execute.
+    \item \textbf{FPGA/Hardware}: Design the datapath, registers, and control logic following the ISA spec; leverage simple microcoded or hardwired control units.
+    \item \textbf{Cross-Platform Considerations}:  
+      \begin{itemize}
+        \item Endianness: Define the instruction encoding byte order explicitly (big or little endian).
+        \item Memory alignment: Enforce 16-bit aligned instructions and data where possible.
+        \item Timing: Pipeline stages can be optimized or simplified depending on hardware.
+      \end{itemize}
+\end{itemize}
+
+\subsection{Extensibility}
+The architecture is designed for easy extension by adding:
+\begin{itemize}
+    \item New instructions with reserved opcode space.
+    \item Expanded register sets or wider registers.
+    \item Interrupt and exception handling.
+    \item Coprocessor or peripheral integration.
+\end{itemize}
+
+\section{Example: Simple Reimplementation Loop (Pseudo C)}
+\begin{verbatim}
+while (running) {
+    instr = fetch(memory, CPU.PC);
+    decoded = decode(instr);
+    execute(decoded, &CPU, memory);
+    updatePC(&CPU, decoded);
+}
+\end{verbatim}
+
+\section{Summary}
+The mighf system is built to be straightforward to implement and maintain, with a clear focus on portability and extensibility. Its simple core makes it ideal for educational use, embedded systems, and experimental CPU projects.
+
+\end{document}

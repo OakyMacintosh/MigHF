@@ -1,0 +1,109 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{The mighf ISA: A Next-Gen Minimalist Instruction Set Architecture}
+\author{Miguel “Kuyo” / SufremOak}
+\date{\today}
+
+% Code highlighting style for assembly
+\lstdefinelanguage{mighfasm}{
+    keywords={MOV, ADD, SUB, JMP, CALL, RET, PUSH, POP, LOAD, STORE, AND, OR, XOR, NOT, SHL, SHR, NOP, HALT},
+    keywordstyle=\color{blue}\bfseries,
+    comment=[l]{;},
+    commentstyle=\color{gray}\itshape,
+    morecomment=[s]{/*}{*/},
+    morekeywords=[2]{R0,R1,R2,R3,R4,R5,R6,R7,PC,SP,FLAGS},
+    keywordstyle=[2]\color{teal},
+    sensitive=true,
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{white},
+    showspaces=false,
+    showstringspaces=false,
+    tabsize=4,
+    breaklines=true,
+    breakatwhitespace=true,
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The mighf Instruction Set Architecture (ISA) is a custom-designed, minimal yet powerful ISA aimed at embedded and low-level system programming. It balances simplicity and extensibility while supporting modern needs like stack operations, conditional branching, and a basic type system.
+\end{abstract}
+
+\section{Introduction}
+The mighf ISA is designed for efficient assembly-level programming on low-resource machines, blending classic RISC simplicity with flexible stack-based operations. It is intended to be a clean foundation for multiple platform ports and language toolchains.
+
+\section{Register Set}
+\begin{itemize}
+    \item \textbf{R0--R7}: General purpose registers.
+    \item \textbf{PC}: Program Counter — holds the address of the next instruction.
+    \item \textbf{SP}: Stack Pointer — points to the top of the stack.
+    \item \textbf{FLAGS}: Status flags register (Zero, Carry, Sign, Overflow).
+\end{itemize}
+
+\section{Memory Model}
+The ISA uses a flat 16-bit address space (adjustable for target platforms). Memory is byte-addressable. The stack grows downward in memory.
+
+\section{Instruction Formats}
+The ISA supports fixed 16-bit instruction encoding with optional immediate values and register operands.
+
+\section{Core Instructions}
+
+\begin{lstlisting}[language=asm,caption={Example mighf assembly code}]
+; Move immediate value 5 into R1
+MOV R1, #5        
+
+; Add R1 and R2, store in R3
+ADD R3, R1, R2   
+
+; Push R3 onto stack
+PUSH R3          
+
+; Conditional jump if zero flag set
+JZ label_zero     
+
+; Return from subroutine
+RET              
+
+label_zero:
+NOP               
+HALT              
+\end{lstlisting}
+
+Key instructions include:
+\begin{itemize}
+    \item \texttt{MOV} — Move data between registers or immediate to register.
+    \item \texttt{ADD}, \texttt{SUB}, \texttt{AND}, \texttt{OR}, \texttt{XOR} — Basic ALU ops.
+    \item \texttt{PUSH}, \texttt{POP} — Stack operations.
+    \item \texttt{JMP}, \texttt{JZ}, \texttt{JNZ} — Control flow.
+    \item \texttt{CALL}, \texttt{RET} — Subroutine call and return.
+    \item \texttt{LOAD}, \texttt{STORE} — Memory access.
+\end{itemize}
+
+\section{Flags}
+\begin{itemize}
+    \item \textbf{Z} (Zero): Set if the result of an operation is zero.
+    \item \textbf{C} (Carry): Set if an operation results in a carry out.
+    \item \textbf{S} (Sign): Set if the result is negative.
+    \item \textbf{O} (Overflow): Set if arithmetic overflow occurs.
+\end{itemize}
+
+\section{Extensibility}
+The ISA is designed to allow future extensions including new instructions, wider data types, and custom coprocessor operations.
+
+\section{Conclusion}
+mighf ISA strikes a balance between simplicity and practical features needed for modern embedded programming. It is a solid base for further tooling and OS development.
+
+\end{document}
