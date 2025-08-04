@@ -1,0 +1,11 @@
+.head "MIGHF Program v1.0"
+.org 0x1000
+
+start:
+    LOAD R1, #42
+    LOAD R2, #100
+    ADD R1, R2
+    STORE R1, result
+    HALT
+
+result: .dw 0

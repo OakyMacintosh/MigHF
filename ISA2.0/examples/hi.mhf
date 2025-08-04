@@ -1,0 +1,6 @@
+LOAD R0, #'H'
+STORE R0, 0xFF00
+LOAD R0, #'i'
+STORE R0, 0xFF00
+HALT
+
