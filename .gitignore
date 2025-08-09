@@ -21,6 +21,7 @@
 *.app
 *.elf
 *.bin
+*.mhfb
 
 # Debug files
 *.dSYM/
@@ -45,3 +46,5 @@ cmake-build-*/
 
 # Other
 *.log
+build/
+
