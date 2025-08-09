@@ -22,5 +22,7 @@ There are not much devtools, since *mighf* is just a "baby" architecture. But yo
 
 It can be builded by simply compiling the `toolchain/mighf-unknown-gnuabi-as.c` file with gcc.
 
+take a look at the [wiki](https://github.com/OakyMacintosh/MigHF/wiki/Assembly-Language-Documentation-(Home)) for reference
+
 ## Contributing
 I, OakyMacintosh acept any type of help in this project! Any questions, or help, or even bugs, can be reported and asked without going out of github.
