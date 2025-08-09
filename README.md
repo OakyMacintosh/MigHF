@@ -26,3 +26,7 @@ take a look at the [wiki](https://github.com/OakyMacintosh/MigHF/wiki/Assembly-L
 
 ## Contributing
 I, OakyMacintosh acept any type of help in this project! Any questions, or help, or even bugs, can be reported and asked without going out of github.
+
+> [!NOTE]
+> I need someone who can contribute by creating pre-built Darwin (macOS) Binaries, since I don't own a Mac!
+> contact [me](mailto:migsufrem@hotmail.com) for more info, and also by volluntaring yourself!
