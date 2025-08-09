@@ -474,6 +474,8 @@ void compile_function(Compiler *comp, TokenList *tokens) {
         fprintf(stderr, "Error: Expected function name\n");
         exit(1);
     }
+    
+    printf("Compiling function: %s\n", name_tok->value);
     advance_token(tokens);
     
     // Parameters
@@ -500,6 +502,7 @@ void compile_function(Compiler *comp, TokenList *tokens) {
     
     // Add HALT at end of main function
     if (strcmp(name_tok->value, "main") == 0) {
+        printf("Adding HALT instruction for main function\n");
         emit_byte(comp, OP_HALT);
     }
 }
@@ -525,6 +528,7 @@ void write_mhf_file(Compiler *comp, const char *filename) {
     
     mhf_header_t header = {0};
     strcpy(header.signature, "MHF");
+    header.signature[3] = 0; // Ensure null terminator
     header.version = 1;
     header.flags = 0;
     header.head_offset = sizeof(header);
@@ -533,11 +537,23 @@ void write_mhf_file(Compiler *comp, const char *filename) {
     header.symbol_offset = sizeof(header) + comp->size;
     header.file_size = sizeof(header) + comp->size;
     
+    printf("Writing MHF header:\n");
+    printf("  Signature: %.3s\n", header.signature);
+    printf("  Code offset: 0x%x\n", header.code_offset);
+    printf("  File size: %d\n", header.file_size);
+    
     fwrite(&header, sizeof(header), 1, f);
     fwrite(comp->code, comp->size, 1, f);
     fclose(f);
     
     printf("Generated %s (%d bytes of bytecode)\n", filename, comp->size);
+    
+    // Debug: Show first few bytes of generated code
+    printf("First few bytes of bytecode: ");
+    for (int i = 0; i < (comp->size < 16 ? comp->size : 16); i++) {
+        printf("%02x ", comp->code[i]);
+    }
+    printf("\n");
 }
 
 int main(int argc, char *argv[]) {
