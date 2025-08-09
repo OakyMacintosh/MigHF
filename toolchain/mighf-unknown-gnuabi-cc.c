@@ -444,6 +444,21 @@ void compile_statement(Compiler *comp, TokenList *tokens) {
         advance_token(tokens);
         compile_putchar(comp, tokens);
     }
+    else if (tok->type == TOK_RETURN) {
+        // Handle return statement
+        advance_token(tokens);
+        
+        // Skip the return value for now (could be expression)
+        if (current_token(tokens)->type != TOK_SEMICOLON) {
+            compile_expression(comp, tokens, 0); // Compile return expression
+        }
+        
+        if (!match_token(tokens, TOK_SEMICOLON)) {
+            fprintf(stderr, "Error: Expected ';' after return\n");
+            exit(1);
+        }
+        return;
+    }
     else if (tok->type == TOK_LBRACE) {
         // Block statement
         advance_token(tokens);
@@ -455,11 +470,24 @@ void compile_statement(Compiler *comp, TokenList *tokens) {
             fprintf(stderr, "Error: Expected '}'\n");
             exit(1);
         }
-        return; // Don't consume semicolon
+        return; // Don't consume semicolon for blocks
+    }
+    else if (tok->type == TOK_RBRACE || tok->type == TOK_EOF) {
+        // End of block or file - don't consume semicolon
+        return;
+    }
+    else {
+        fprintf(stderr, "Error: Unexpected token '%s' (type %d) at line %d\n", 
+                tok->value, tok->type, tok->line);
+        exit(1);
     }
     
-    if (!match_token(tokens, TOK_SEMICOLON)) {
-        fprintf(stderr, "Error: Expected ';'\n");
+    // Only require semicolon for statements that need it
+    if (current_token(tokens)->type == TOK_SEMICOLON) {
+        advance_token(tokens);
+    } else if (current_token(tokens)->type != TOK_RBRACE && 
+               current_token(tokens)->type != TOK_EOF) {
+        fprintf(stderr, "Error: Expected ';' after statement\n");
         exit(1);
     }
 }
@@ -508,15 +536,49 @@ void compile_function(Compiler *comp, TokenList *tokens) {
 }
 
 void compile_program(Compiler *comp, TokenList *tokens) {
+    int found_main = 0;
+    
     while (current_token(tokens)->type != TOK_EOF) {
         Token *tok = current_token(tokens);
         
         if (tok->type == TOK_INT || tok->type == TOK_CHAR || tok->type == TOK_VOID) {
-            compile_function(comp, tokens);
+            // Look ahead to see if this is a function declaration
+            int saved_pos = tokens->current;
+            advance_token(tokens); // Skip type
+            
+            if (current_token(tokens)->type == TOK_IDENTIFIER) {
+                char func_name[256];
+                strcpy(func_name, current_token(tokens)->value);
+                advance_token(tokens); // Skip function name
+                
+                if (current_token(tokens)->type == TOK_LPAREN) {
+                    // This is a function
+                    tokens->current = saved_pos; // Reset position
+                    compile_function(comp, tokens);
+                    
+                    if (strcmp(func_name, "main") == 0) {
+                        found_main = 1;
+                    }
+                } else {
+                    // This is a variable declaration
+                    tokens->current = saved_pos; // Reset position
+                    compile_statement(comp, tokens);
+                }
+            } else {
+                tokens->current = saved_pos; // Reset position
+                compile_statement(comp, tokens);
+            }
         } else {
             compile_statement(comp, tokens);
         }
     }
+    
+    if (!found_main) {
+        printf("Warning: No main function found, adding HALT instruction\n");
+        emit_byte(comp, OP_HALT);
+    }
+    
+    printf("Compilation complete. Generated %d bytes of bytecode.\n", comp->size);
 }
 
 void write_mhf_file(Compiler *comp, const char *filename) {
@@ -578,6 +640,8 @@ int main(int argc, char *argv[]) {
     source[size] = 0;
     fclose(f);
     
+    printf("Source code:\n%s\n", source);
+    
     // Compile
     TokenList tokens;
     Compiler comp = {0};
@@ -586,6 +650,12 @@ int main(int argc, char *argv[]) {
     printf("Tokenizing...\n");
     tokenize(source, &tokens);
     printf("Found %d tokens\n", tokens.count);
+    
+    // Debug: Print all tokens
+    printf("Tokens:\n");
+    for (int i = 0; i < tokens.count; i++) {
+        printf("  %d: %s (type %d)\n", i, tokens.tokens[i].value, tokens.tokens[i].type);
+    }
     
     printf("Compiling...\n");
     compile_program(&comp, &tokens);
