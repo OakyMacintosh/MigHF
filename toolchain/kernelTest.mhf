@@ -1,0 +1,8 @@
+.head "OS Kernel v1.0"     ; Metadata header
+.org 0x1000               ; Set code origin  
+.equ STACK_SIZE, 1024     ; Define constants
+.db "Hello", 0            ; Define byte data
+.dw 0x1234, 0x5678       ; Define word data
+.ifdef DEBUG              ; Conditional assembly
+    BREAK                 ; Debug instruction
+.endif
