@@ -1,0 +1,9 @@
+[project]
+name = "mighf"
+version = "0.1.6a"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "typer>=0.16.0",
+]

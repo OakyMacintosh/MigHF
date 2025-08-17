@@ -1,8 +1,0 @@
-#!/bin/sh
-
-export MHF_INSTALL=/opt/mighf
-
-sudo mkdir -p $MHF_INSTALL
-mkdir build
-gcc mhfsoft.c -o build/mhf
-sudo cp build/mhf /opt/mighf
