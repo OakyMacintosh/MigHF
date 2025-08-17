@@ -5,14 +5,18 @@ app = typer.Typer()
 
 @app.command()
 def repl():
+    def print_help():
+        print("Commands:")
+        print("    ,help")
+        print("    ,quit")
+        print("")
 
     while True:
-        print(
-            command = input())  # like ts?
-        print(f"(mhf): ", command)
-        if command == "help":
+        command = input("(mhf): ")
+       # print(f"(mhf): {command}")
+        if command == ",help":
             print_help()
-        elif command == "quit":
+        elif command == ",quit":
             exit(0)
         else:
             print(f"Unexpected command")
