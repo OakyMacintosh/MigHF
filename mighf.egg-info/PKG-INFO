@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: mighf
+Version: 0.1.6a0
+Summary: Add your description here
+Home-page: https://github.com/mighf/mighf-v3lc
+Author: MIGHF Development Team
+Author-email: dev@mighf.org
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: angr>=9.2.170
+Requires-Dist: bitstring>=4.3.1
+Requires-Dist: bitstruct>=8.21.0
+Requires-Dist: capstone>=5.0.3
+Requires-Dist: cython>=3.1.3
+Requires-Dist: kaitaistruct>=0.10
+Requires-Dist: keystone>=27.0.0
+Requires-Dist: lark>=1.2.2
+Requires-Dist: numpy>=2.3.2
+Requires-Dist: pyparsing>=3.2.3
+Requires-Dist: typer>=0.16.0
+Requires-Dist: unicorn>=2.1.3
+Dynamic: author
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: requires-python

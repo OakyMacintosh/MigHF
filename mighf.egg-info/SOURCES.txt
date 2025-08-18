@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+setup.py
+mighf.egg-info/PKG-INFO
+mighf.egg-info/SOURCES.txt
+mighf.egg-info/dependency_links.txt
+mighf.egg-info/not-zip-safe
+mighf.egg-info/requires.txt
+mighf.egg-info/top_level.txt
